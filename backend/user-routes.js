@@ -1,8 +1,5 @@
 var express = require('express'),
-		_			 = require('lodash'),
-		config	= require('./config'),
-		db			= require('./db'),
-		jwt		 = require('jsonwebtoken');
+		db			= require('./db');
 
 var app = module.exports = express.Router();
 
@@ -12,10 +9,6 @@ var users = [{
 	username: 'gonto',
 	password: 'gonto'
 }];
-
-function createToken(user) {
-	return jwt.sign(_.omit(user, 'password'), config.secret, { expiresInMinutes: 60*5 });
-}
 
 app.post('/users', function(req, res) {
 	if (!req.body.username || !req.body.password) {
@@ -57,9 +50,7 @@ app.post('/sessions/create', function(req, res) {
 	// }
 	db.verifyLogin(req.body.username, req.body.password, function(result) {
 		if (result.length > 0) {
-			res.status(201).send({
-				id_token: createToken(result[0])
-			});
+			res.status(201).send(result);
 		} else {
 			return res.status(401).send("The username or password don't match");
 		}

@@ -9,7 +9,6 @@ var logger          = require('morgan'),
 var app = express();
 
 dotenv.load();
-
 // Parsers
 // old version of line
 // app.use(bodyParser.urlencoded());

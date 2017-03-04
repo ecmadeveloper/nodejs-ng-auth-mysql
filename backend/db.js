@@ -1,5 +1,8 @@
 var mysql = require('mysql'),
-	md5 = require('md5');
+	md5 = require('md5'),
+	config	= require('./config'),
+	_   = require('lodash'),
+	jwt = require('jsonwebtoken');
 
 var connection = mysql.createConnection({
 	host	 : 'localhost',
@@ -7,6 +10,11 @@ var connection = mysql.createConnection({
 	password : 'root',
 	database : 'portal_dev'
 });
+
+function createToken(user) {
+	params = _.omit(user, 'password');
+	return jwt.sign(_.omit(params, 'access_token'), config.secret, { expiresInMinutes: 60*5 });
+}
 
 connection.connect(function(err) {
 	if (err) throw err;
@@ -59,6 +67,7 @@ connection.verifyLogin = function(username, password, callback) {
 		if (result.length > 0) {
 			var savedPassword = md5(result[0].salt + password);
 			if (savedPassword == result[0].password) {
+				result[0].access_token = createToken(user);
 				user = result;
 			}
 		}
@@ -93,6 +102,36 @@ connection.createUser = function(params, callback) {
 				if (typeof callback === "function") callback(result);
 			}
 		);
+	}
+}
+
+connection.updateToken = function(params, callback) {
+	var data = {access_token: createToken(params)};
+	if (typeof callback === "function") {
+		callback();
+	}
+}
+
+connection.updateUser = function(params, callback) {
+	var d = new Date(),
+		date = d.getFromFormat('yyyy-mm-dd hh:ii:ss');
+	var data = {
+		first_name: params.first_name,
+		last_name: params.last_name,
+		email: params.email,
+		updated_at: date
+	};
+	if (!params.password) {
+		var salt = Math.random().toString(36).slice(-8);
+		data.salt = salt;
+		data.password = md5(salt + params.password);
+	}
+	if (!params.username) {
+		data.username = params.username;
+	}
+	// connection.query('UPDATE user SET ? WHERE ?', data)
+	if (typeof callback === "function") {
+		callback();
 	}
 }
 
