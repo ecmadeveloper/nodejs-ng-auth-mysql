@@ -50,7 +50,10 @@ export class Home {
       this.authHttp.get(url)
         .subscribe(
           response => this.response = response.text(),
-          error => this.response = error.text()
+          error => {
+            // this.response = error.text()
+            this.logout();
+          }
         );
     }
   }
